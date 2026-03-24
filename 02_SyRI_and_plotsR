@@ -1,0 +1,37 @@
+For the detection of large-scale chromosomal inversions and translocations, SyRI (v1.7.1, 2025 (Goel et al. 2019)) was used to detect collinear and inverted regions and then the results were plotted on plotsr (v1.1.0, 2023  (Goel and Schneeberger 2022)). 
+
+For SyRI analysis, the genomes of each species included in this step (crucian carp, goldfish, common carp and zebrafish) had to be done separate by each equivalent chromosome. Scaffolds were separated by splitting each genome.fasta file (in bash: 
+
+csplit -z genome.fasta '/>/' '{*}'
+
+Each scaffold was renamed to a short name that only reflected the number of the chromosome. These files should have the same names between species, and the number reflects their match across species. For example, ga01 matches ua01, but both files and fasta headers were renamed to u1, and stored in a folder that identified the species and subgenome. 
+
+A series of pairwise comparisons across species (crucian carp vs. goldfish, goldfish vs. common carp, common carp vs. zebrafish) were then performed as an array for each chromosome (i.e. 25 x 25 chromosomes), so that equivalent subgenomes between two species were compared (AxA and BxB). The compared chromosomes were aligned with the genomic pairwise aligner minimap2 v.2.26 (Li 2018):
+minimap2 -ax asm5 –eqx crucian_carp/subgenome_A/u${SLURM_ARRAY_TASK_ID}.fasta goldfish/subgenome_A/u${SLURM_ARRAY_TASK_ID}.fasta > AxA_u${SLURM_ARRAY_TASK_ID}.sam
+
+Different scoring systems (asm) were used depending on the species sequence divergence, so that close species (crucian carp x goldfish) used asm5, less similar species (goldfish x common carp) used asm10, and more divergent species (common carp x zebrafish, or crucian carp x zebrafish) used asm20. With the mapping files, SyRI was used to obtain collinearity inversion locations:
+
+python3 $PATH_TO_SYRI -c out.sam -r refgenome -q qrygenome -k -F S
+syri -c AxA_u${SLURM_ARRAY_TASK_ID}.sam \
+-r crucian_carp/subgenome_A/u${SLURM_ARRAY_TASK_ID}.fasta \
+-q caur/subgenome_A/u${SLURM_ARRAY_TASK_ID}.fasta -k -F S
+
+The output log (syri.log) reports whether the chromosomes fit together or not. 
+Sometimes, the chromosomes are matched in an inverted way, and SyRI is unable to analyze, therefore the chromosomes need to be inverted. If the log showed a match error, the query chromosome was inverted using Seqtk v1.3 (Li, 2013) while keeping the multi-line format:
+
+seqtk seq -r -l 80 u1.fasta > u1_rev.fasta
+
+Then SyRI was run again. For plotting, a tab-separate path text file (“genomes file”) that includes locations to the query and reference chromosomes, as well as labels and formatting for the plots were programmatically made for each chromosome and both subgenomes, using bash commands:
+
+`for i in {1..25}; do printf "/crucian_carp/subgenome_A/u%s.fasta\tCrucian_carp\tlw:1.5\n/goldfish/subgenome_A/u%s.fasta\tGoldfish\tlw:1.5\n" "$i" "$i" > "genomes_u$i.txt"; done`
+
+Then, using the SyRI output for each chromosome (syri.out) and the corresponding pathway file (after –genomes), plotsr was called to obtain a visualization of the inversions detected by SyRI:
+
+plotsr --sr SyRI_output_folder_u${SLURM_ARRAY_TASK_ID}/syri.out 
+--genomes /genomes_paths/genomes_u${SLURM_ARRAY_TASK_ID}.txt 
+-o output_plot_u${SLURM_ARRAY_TASK_ID}.png
+
+Finally, plots should be visually checked for artefact inversions. 
+Sometimes SyRI reports whole chromosomes as inverted (i.e. fails to identify this as an error as described above), which is solved by manually reversing the order of one of the chromosomes (using seqtk) before running SyRI. 
+
+SyRI may be able to detect signs of inversions and over-estimate their presence, therefore it is useful to check for similar patterns with dot-plots, for example with D-GENIES. 
