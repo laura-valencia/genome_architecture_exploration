@@ -1,6 +1,7 @@
-McScanX requires two input files.
+Documentation for McScanX: https://github.com/wyp1125/MCScanX
 
-A genomic locations (.bed) file is required for the McScanX calculation, and to obtain it, annotation files (.gtf) were obtained for all genomes from their repositories. AGAT (Version: v1.0.0, https://github.com/NBISweden/AGAT) (Dainat 2022) was used to standardize the annotations:
+File preparation:
+McScanX requires two input files: A genomic locations (.bed) file is required for the McScanX calculation, and to obtain it, annotation files (.gtf) were obtained for all genomes from their repositories. AGAT (Version: v1.0.0, https://github.com/NBISweden/AGAT) (Dainat 2022) was used to standardize the annotations:
 
 agat_convert_sp_gxf2gxf.pl -g input_annotation.gff -o standarized.AGAT.gff
 
@@ -27,7 +28,11 @@ Then the same proteins file was used to be searched in the database:
 
 blastp -outfmt 6 -query fish_proteins.faa -db fish_protein_db -evalue 1e-10 -max_target_seqs 5 -out output.blast -num_threads 8
 
+Running McScanX
 The output files were later used by McScanX to detect syntenic blocks between species. 
 The resulting files need to be put together in a folder with a short name, like “xyz”. In this folder, the `.bed` file needs to be included, but renamed to `.gff` file, next to the output of the BLASTp search. Both files need to have the same name (xyz.gff and xyz.blast). Then McScanX can be run to obtain collinearity files (MCScanX-master/MCScanX ./xyz/xyz).
 
-The program call should not have file extensions, only the base name. The output files xyz.gff (in BED format) and the output xyz.collinearity were downloaded locally to be visualized in SynVisio (Bandi and Gutwin 2020), which is an in-browser synteny plotting application. In SynVisio, the chromosomes of interest were selected in a multiple-species comparison, and it was possible to manually rearrange paired chromosomes and to identify which chromosomes paired to each other by synteny. In this way, the subgenomes A and B of each species were identified. In a similar way, each subgenome was paired between species. Pairing of chromosomes were also confirmed with dotplots obtained with D-genies (Cabanettes and Klopp 2018). Due to species divergence, which increases computer power requirements and time, goldfish, common carp and crucian carp were analyzed for collinearity in one batch, and then crucian carp and zebrafish were analyzed in a separate batch, so that two synteny datasets for McScanX were produced.
+The program call should not have file extensions, only the base name. The output files xyz.gff (in BED format).
+
+Visualization in SynVisio:
+The output xyz.collinearity were downloaded locally to be visualized in SynVisio (Bandi and Gutwin 2020), which is an in-browser synteny plotting application. In SynVisio, the chromosomes of interest were selected in a multiple-species comparison, and it was possible to manually rearrange paired chromosomes and to identify which chromosomes paired to each other by synteny. In this way, the subgenomes A and B of each species were identified. In a similar way, each subgenome was paired between species. Pairing of chromosomes were also confirmed with dotplots obtained with D-genies (Cabanettes and Klopp 2018). Due to species divergence, which increases computer power requirements and time, goldfish, common carp and crucian carp were analyzed for collinearity in one batch, and then crucian carp and zebrafish were analyzed in a separate batch, so that two synteny datasets for McScanX were produced.
