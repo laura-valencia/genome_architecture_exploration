@@ -34,5 +34,6 @@ The resulting files need to be put together in a folder with a short name, like 
 
 The program call should not have file extensions, only the base name. The output files xyz.gff (in BED format).
 
-Visualization in SynVisio:
+Visualization in SynVisio: https://synvisio.github.io/#/
+
 The output xyz.collinearity were downloaded locally to be visualized in SynVisio (Bandi and Gutwin 2020), which is an in-browser synteny plotting application. In SynVisio, the chromosomes of interest were selected in a multiple-species comparison, and it was possible to manually rearrange paired chromosomes and to identify which chromosomes paired to each other by synteny. In this way, the subgenomes A and B of each species were identified. In a similar way, each subgenome was paired between species. Pairing of chromosomes were also confirmed with dotplots obtained with D-genies (Cabanettes and Klopp 2018). Due to species divergence, which increases computer power requirements and time, goldfish, common carp and crucian carp were analyzed for collinearity in one batch, and then crucian carp and zebrafish were analyzed in a separate batch, so that two synteny datasets for McScanX were produced.
