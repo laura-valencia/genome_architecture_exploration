@@ -1,0 +1,33 @@
+McScanX requires two input files.
+
+A genomic locations (.bed) file is required for the McScanX calculation, and to obtain it, annotation files (.gtf) were obtained for all genomes from their repositories. AGAT (Version: v1.0.0, https://github.com/NBISweden/AGAT) (Dainat 2022) was used to standardize the annotations:
+
+agat_convert_sp_gxf2gxf.pl -g input_annotation.gff -o standarized.AGAT.gff
+
+To obtain the .bed file:
+
+agat_convert_sp_gff2bed.pl --gff standarized.AGAT.gff -o output.bed
+
+A file with protein sequences in fasta format is also required for McScanX, and these were also obtained using AGAT:
+
+agat_sp_extract_sequences.pl -g standardized.AGAT.gff -f genome.fasta -t cds -p -o output.faa
+
+After the locations (.bed) and proteins (.faa) files were produced, the scaffold names in both files were changed to the shorter name versions that McScanX requires. These chromosome labels use letters to identify the species and were used throughout the study: “u” is for crucian carp, “g” for goldfish, and “y” for common carp.  For zebrafish, since the genome is not duplicated, chromosomes were named from z01 to z25.
+
+The scaffold names were changed with sed and awk (for example: s/\bNC_133176.1\b/z04/g). 
+A list of sed commands was saved as a text file for each scaffold name change, and then applied to the whole locations (.bed) and proteins (.faa) files (awk 'NR==FNR {sed_commands = sed_commands $0 RS; next} {print | "sed -f - output.AGAT.faa"}' sed_commands.txt sed_commands.txt > renamed.faa). The locations (.bed) file also must have a specific column order: 1. Chromosome name, 2. Protein name, 3. Start, 4. End and should be tab separated. Awk was used for these adjustments (awk -F ' ' -v OFS='\t' '{print $1, $2, $3, $4}' renamed.bed > tab_sep.bed).
+
+For each species, once the locations (.bed) and proteins (.faa) files were produced, they were concatenated to include all species in one file. Once concatenated, the proteins file (.faa) was used for a search against a database made of the same proteins, using BLASTp v. 2.11.0 (Camacho et al. 2009). The documentation of McScanX describes the use of blastall, but this is now deprecated. 
+
+First, the database was created with the protein files including all species:
+
+makeblastdb -in fish_proteins.faa -input_type fasta -dbtype prot -title fish_protein_db -out fish_protein_db
+
+Then the same proteins file was used to be searched in the database:
+
+blastp -outfmt 6 -query fish_proteins.faa -db fish_protein_db -evalue 1e-10 -max_target_seqs 5 -out output.blast -num_threads 8
+
+The output files were later used by McScanX to detect syntenic blocks between species. 
+The resulting files need to be put together in a folder with a short name, like “xyz”. In this folder, the `.bed` file needs to be included, but renamed to `.gff` file, next to the output of the BLASTp search. Both files need to have the same name (xyz.gff and xyz.blast). Then McScanX can be run to obtain collinearity files (MCScanX-master/MCScanX ./xyz/xyz).
+
+The program call should not have file extensions, only the base name. The output files xyz.gff (in BED format) and the output xyz.collinearity were downloaded locally to be visualized in SynVisio (Bandi and Gutwin 2020), which is an in-browser synteny plotting application. In SynVisio, the chromosomes of interest were selected in a multiple-species comparison, and it was possible to manually rearrange paired chromosomes and to identify which chromosomes paired to each other by synteny. In this way, the subgenomes A and B of each species were identified. In a similar way, each subgenome was paired between species. Pairing of chromosomes were also confirmed with dotplots obtained with D-genies (Cabanettes and Klopp 2018). Due to species divergence, which increases computer power requirements and time, goldfish, common carp and crucian carp were analyzed for collinearity in one batch, and then crucian carp and zebrafish were analyzed in a separate batch, so that two synteny datasets for McScanX were produced.
