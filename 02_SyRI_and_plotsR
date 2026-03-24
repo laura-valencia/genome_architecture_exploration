@@ -1,4 +1,7 @@
 For the detection of large-scale chromosomal inversions and translocations, SyRI (v1.7.1, 2025 (Goel et al. 2019)) was used to detect collinear and inverted regions and then the results were plotted on plotsr (v1.1.0, 2023  (Goel and Schneeberger 2022)). 
+Documentation for SyRI: https://schneebergerlab.github.io/syri/
+Documentation for plotsr: https://github.com/schneebergerlab/plotsr
+
 
 For SyRI analysis, the genomes of each species included in this step (crucian carp, goldfish, common carp and zebrafish) had to be done separate by each equivalent chromosome. Scaffolds were separated by splitting each genome.fasta file (in bash: 
 
